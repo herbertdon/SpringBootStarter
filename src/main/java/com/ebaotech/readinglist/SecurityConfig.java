@@ -6,6 +6,9 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @Configuration
 @EnableWebSecurity
@@ -15,20 +18,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    
-    super.configure(auth);
+    auth.userDetailsService(new UserDetailsService(){
+      @Override
+      public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
+        return readerRepository.findOne(userName);
+      }
+    });
   }
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
-    http.authorizeRequests().antMatchers("/").access("hasRole('READER')")
-    .antMatchers("/**")
-    .permitAll()
+    http.authorizeRequests()
+//    .antMatchers("/").access("hasRole('READER')")
+//    .antMatchers("/reader/**").access("hasRole('READER')")
+    .antMatchers("/reader/**").permitAll()
     .and()
     .formLogin()
     .loginPage("/login")
-    .failureUrl("/");
-    super.configure(http);
+    .failureUrl("/login?error=true");
+    http.csrf().disable();
   }
   
 }
